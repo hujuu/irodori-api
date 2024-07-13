@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "irodori-api"
+version = "0.1.0"
+description = ""
+authors = ["hujuu <1961946+hujuu@users.noreply.github.com>"]
+readme = "README.md"
+packages = [{include = "irodori_api"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
