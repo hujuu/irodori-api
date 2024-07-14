@@ -1,3 +1,5 @@
+import os
+import asyncio
 from fastapi import FastAPI, status, Body
 from decouple import config
 from fastapi.encoders import jsonable_encoder
@@ -8,7 +10,6 @@ from irodori_api.models import GiftBase
 from datetime import datetime
 from starlette.responses import JSONResponse
 
-
 middleware = [
     Middleware(
         CORSMiddleware,
@@ -18,27 +19,15 @@ middleware = [
     )
 ]
 
-DB_URL = "mongodb+srv://kenakai:aNNgX5QhZh7AICPH@cluster0.giyxphh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+DB_URL = os.environ.get("MONGODB_URL", "mongodb+srv://kenakai:aNNgX5QhZh7AICPH@cluster0.giyxphh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 DB_NAME = config("DB_NAME", cast=str)
-origins = ["*"]
+
 app = FastAPI(middleware=middleware)
 
-# グローバル変数としてクライアントとデータベースを定義
-mongodb_client = None
-mongodb = None
 
-
-@app.on_event("startup")
-async def startup_db_client():
-    global mongodb_client, mongodb
-    mongodb_client = AsyncIOMotorClient(DB_URL, tls=True, tlsAllowInvalidCertificates=True)
-    mongodb = mongodb_client[DB_NAME]
-
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    if mongodb_client:
-        mongodb_client.close()
+async def get_database():
+    client = AsyncIOMotorClient(DB_URL, tls=True, tlsAllowInvalidCertificates=True)
+    return client[DB_NAME]
 
 
 @app.get("/")
@@ -48,15 +37,23 @@ async def read_root():
 
 @app.post("/api/gifts", response_description="Add new Gift")
 async def create_gift(gift: GiftBase = Body(...)):
-    global mongodb
-    if mongodb is None:
-        await startup_db_client()
+    db = await get_database()
 
     portfolio = jsonable_encoder(gift)
     portfolio["created_at"] = datetime.now().isoformat()
-    new_portfolio = await mongodb["gifts"].insert_one(portfolio)
-    created_portfolio = await mongodb["gifts"].find_one(
+    new_portfolio = await db["gifts"].insert_one(portfolio)
+    created_portfolio = await db["gifts"].find_one(
         {"_id": new_portfolio.inserted_id}
     )
 
     return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_portfolio)
+
+
+# Lambda handler
+async def handler(event, context):
+    return await app(event, context)
+
+
+# Wrapper for synchronous Lambda invocations
+def lambda_handler(event, context):
+    return asyncio.get_event_loop().run_until_complete(handler(event, context))
