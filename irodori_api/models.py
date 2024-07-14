@@ -1,6 +1,6 @@
 from bson import ObjectId
-from pydantic import Field, BaseModel, validator
-from typing import List, Optional
+from pydantic import Field, BaseModel, ConfigDict
+from typing import List, Optional, Any, ClassVar
 from datetime import datetime
 
 
@@ -16,16 +16,17 @@ class PyObjectId(ObjectId):
         return ObjectId(v)
 
     @classmethod
-    def __modify_schema__(cls, field_schema):
+    def __get_pydantic_json_schema__(cls, field_schema: Any) -> None:
         field_schema.update(type="string")
 
 
 class MongoBaseModel(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
 
-    class Config:
-        json_encoders = {ObjectId: str}
-
+    model_config = ConfigDict(
+        json_encoders={ObjectId: str},
+        populate_by_name=True
+    )
 
 
 class GiftBase(MongoBaseModel):
