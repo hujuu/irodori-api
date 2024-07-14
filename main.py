@@ -5,7 +5,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from irodori_api.models import GiftBase
-from datetime import datetime, date
+from datetime import datetime
 from starlette.responses import JSONResponse
 
 
