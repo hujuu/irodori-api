@@ -47,13 +47,3 @@ async def create_gift(gift: GiftBase = Body(...)):
     )
 
     return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_portfolio)
-
-
-# Lambda handler
-async def handler(event, context):
-    return await app(event, context)
-
-
-# Wrapper for synchronous Lambda invocations
-def lambda_handler(event, context):
-    return asyncio.get_event_loop().run_until_complete(handler(event, context))
