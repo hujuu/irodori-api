@@ -23,16 +23,23 @@ DB_NAME = config("DB_NAME", cast=str)
 origins = ["*"]
 app = FastAPI(middleware=middleware)
 
+# グローバル変数としてクライアントとデータベースを定義
+mongodb_client = None
+mongodb = None
+
 
 @app.on_event("startup")
 async def startup_db_client():
-    app.mongodb_client = AsyncIOMotorClient(DB_URL, tls=True, tlsAllowInvalidCertificates=True)
-    app.mongodb = app.mongodb_client[DB_NAME]
+    global mongodb_client, mongodb
+    mongodb_client = AsyncIOMotorClient(DB_URL, tls=True, tlsAllowInvalidCertificates=True)
+    mongodb = mongodb_client[DB_NAME]
 
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
-    app.mongodb_client.close()
+    if mongodb_client:
+        mongodb_client.close()
+
 
 @app.get("/")
 async def read_root():
@@ -45,12 +52,15 @@ async def read_item(item_id: int, q: str = None):
 
 
 @app.post("/api/gifts", response_description="Add new Gift")
-async def create_gift(
-        gift: GiftBase = Body(...)):
+async def create_gift(gift: GiftBase = Body(...)):
+    global mongodb
+    if mongodb is None:
+        await startup_db_client()
+
     portfolio = jsonable_encoder(gift)
     portfolio["created_at"] = datetime.now().isoformat()
-    new_portfolio = await app.mongodb["gifts"].insert_one(portfolio)
-    created_portfolio = await app.mongodb["gifts"].find_one(
+    new_portfolio = await mongodb["gifts"].insert_one(portfolio)
+    created_portfolio = await mongodb["gifts"].find_one(
         {"_id": new_portfolio.inserted_id}
     )
 
