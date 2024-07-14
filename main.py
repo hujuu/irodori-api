@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, Response, Request, status, Body
+from fastapi import FastAPI, status, Body
 from decouple import config
 from fastapi.encoders import jsonable_encoder
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -46,12 +46,11 @@ async def read_item(item_id: int, q: str = None):
 
 @app.post("/api/gifts", response_description="Add new Gift")
 async def create_gift(
-        request: Request,
         gift: GiftBase = Body(...)):
     portfolio = jsonable_encoder(gift)
     portfolio["created_at"] = datetime.now().isoformat()
-    new_portfolio = await request.app.mongodb["gifts"].insert_one(portfolio)
-    created_portfolio = await request.app.mongodb["gifts"].find_one(
+    new_portfolio = await app.mongodb["gifts"].insert_one(portfolio)
+    created_portfolio = await app.mongodb["gifts"].find_one(
         {"_id": new_portfolio.inserted_id}
     )
 
