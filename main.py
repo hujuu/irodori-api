@@ -19,7 +19,7 @@ middleware = [
     )
 ]
 
-DB_URL = os.environ.get("MONGODB_URL", "mongodb+srv://kenakai:aNNgX5QhZh7AICPH@cluster0.giyxphh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+DB_URL = config("DB_URL", cast=str)
 DB_NAME = config("DB_NAME", cast=str)
 
 app = FastAPI(middleware=middleware)
