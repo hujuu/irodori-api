@@ -47,10 +47,9 @@ async def read_item(item_id: int, q: str = None):
 @app.post("/api/gifts", response_description="Add new Gift")
 async def create_gift(
         request: Request,
-        portfolio: GiftBase = Body(...)):
-    portfolio = jsonable_encoder(portfolio)
+        gift: GiftBase = Body(...)):
+    portfolio = jsonable_encoder(gift)
     portfolio["created_at"] = datetime.now().isoformat()
-
     new_portfolio = await request.app.mongodb["gifts"].insert_one(portfolio)
     created_portfolio = await request.app.mongodb["gifts"].find_one(
         {"_id": new_portfolio.inserted_id}
