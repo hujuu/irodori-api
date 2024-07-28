@@ -1,5 +1,3 @@
-import os
-import asyncio
 from fastapi import FastAPI, status, Body
 from decouple import config
 from fastapi.encoders import jsonable_encoder
@@ -47,3 +45,12 @@ async def create_gift(gift: GiftBase = Body(...)):
     )
 
     return JSONResponse(status_code=status.HTTP_201_CREATED, content=created_portfolio)
+
+
+@app.get("/api/gifts/{nft_id}", response_description="Get a Gift")
+async def get_gift(nft_id: str):
+    db = await get_database()
+    gift = await db["gifts"].find_one(
+        {"nft_id": nft_id}
+    )
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content=gift)
