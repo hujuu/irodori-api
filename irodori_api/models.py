@@ -29,13 +29,19 @@ class MongoBaseModel(BaseModel):
     )
 
 
+class GiftUrls(BaseModel):
+    url: str
+
+
 class GiftBase(MongoBaseModel):
     nft_id: str = Field(..., min_length=1)
     message: str = Field(..., min_length=1)
+    gift_urls: List[GiftUrls]
 
 
 class GiftUpdate(MongoBaseModel):
     message: Optional[str] = None
+    gift_urls: Optional[List[GiftUrls]] = None
 
 
 class GiftDB(GiftBase):
